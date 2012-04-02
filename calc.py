@@ -18,6 +18,7 @@ def main(argv=None):
         except EOFError:
             break
         except KeyboardInterrupt:
+            print ''
             break
 
         # Setup lexical analyzer
