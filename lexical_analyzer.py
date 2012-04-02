@@ -5,7 +5,7 @@ from collections import deque
 
 Token = enum(
         ERROR = -1,
-        EOS = 0, # End-Of-String
+        EOS = 'EOS', # End-Of-String
     )
 
 class LexicalAnalyzer:
@@ -15,11 +15,18 @@ class LexicalAnalyzer:
 
     # SetInputString sets the input string for lexical analysis.
     def SetInputString(self, input_string):
-        return
+        self._stack = deque(list(input_string))
 
     # Lex function returns the next token from the input string.
     # The detected token string is stored until the next Lex is called.
     def Lex(self):
+
+        try:
+            char = self._stack.popleft()
+        except IndexError: # stack is empty -> empty string or EOS
+            self._token_string = ''
+            return Token.EOS
+
         return Token.ERROR
 
     # GetTokenString returns the character string for the detected token.
