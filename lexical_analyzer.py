@@ -8,6 +8,22 @@ Token = enum(
         EOS = 'EOS', # End-Of-String
     )
 
+Symbols = enum(
+        DIGIT = '0123456789',
+        ALPHA = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        DOT = '.',
+        E = 'eE',
+        PLUS = '+',
+        MINUS = '-',
+        TIMES = '*',
+        DIVIDE = '/',
+        POWER = '^',
+        EQUAL = '=',
+        SPACE = ' ',
+        LEFT_PARENTHESIS = '(',
+        RIGHT_PARENTHESIS = ')',
+    )
+
 class LexicalAnalyzer:
 
     _token_string = None #Detected string for the current token.
