@@ -1,0 +1,17 @@
+Calculator Grammar
+        <statement> → <command> | <expr> | id | id = <expr>
+        <command> → ‘list’ | ‘clear’ | ‘exit’ | ‘quit’
+        <expr> → <expr> ‘+’ <term> | <expr> ‘-‘ <term> | <term>
+        <term> → <term> ‘*’ <factor> | <term> ‘/’ <factor> | <factor>
+        <factor> → <unary_op> <base> <exponent>
+        <unary_op> → ‘+’ | ‘-‘ | ε
+        <base> → ( <expr> ) | id | int_number | real_number
+        <exponent> → ‘^’ <factor> | ε
+
+Terminal symbols
+        id = <alpha> (<alpha>|<digit>)*
+        int_number = <digit>+
+        real_number = (<digit> ‘.’ | ‘.’ <digit>) <number>* [ (‘e’|’E’) [‘+’|’-‘] <digit>+ ]
+        <alpha>: A-Z a-z _              [ x ] means x is optional
+        <digit>: 0-9
+
