@@ -55,13 +55,23 @@ class LexicalAnalyzer:
 
     def _peekNextChar(self):
         try:
+            char = self._stack[0]
+            if char == ' ': # get rid of spaces
+                self._stack.popleft()
+                return self._peekNextChar()
+            else:
+                return char
             return self._stack[0]
         except IndexError:
             return ''
 
     def _popChar(self):
         try:
-            return self._stack.popleft()
+            char = self._stack.popleft()
+            if char == ' ': # get rid of spaces
+                return self._popChar()
+            else:
+                return char
         except IndexError:
             return ''
 
