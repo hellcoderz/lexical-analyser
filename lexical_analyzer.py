@@ -43,7 +43,7 @@ class LexicalAnalyzer:
     # SetInputString sets the input string for lexical analysis.
     def SetInputString(self, input_string):
         self._stack = list(input_string)
-        self._stack.reverse()
+        self._stack.reverse() # python does not have popleft so we reverse the list tu use pop.
 
     # Lex function returns the next token from the input string.
     # The detected token string is stored until the next Lex is called.
@@ -63,7 +63,7 @@ class LexicalAnalyzer:
             else:
                 return char
             return self._stack[-1]
-        except IndexError:
+        except IndexError: # stack is empty
             return ''
 
     def _popChar(self):
