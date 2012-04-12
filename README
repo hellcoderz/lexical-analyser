@@ -1,3 +1,9 @@
+To use just enter
+> python calc.py
+
+Tested with Python 2.7
+
+
 Calculator Grammar
         <statement> → <command> | <expr> | id | id = <expr>
         <command> → ‘list’ | ‘clear’ | ‘exit’ | ‘quit’
