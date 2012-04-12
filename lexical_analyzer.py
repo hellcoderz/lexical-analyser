@@ -15,6 +15,7 @@ Token = enum(
         EQUAL = 'EQUAL',
         LEFT_PARENTHESIS = 'LEFT_PARENTHESIS',
         RIGHT_PARENTHESIS = 'RIGHT_PARENTHESIS',
+        COMMAND = 'COMMAND'
     )
 
 Symbols = enum(
@@ -31,6 +32,7 @@ Symbols = enum(
         SPACE = ' ',
         LEFT_PARENTHESIS = '(',
         RIGHT_PARENTHESIS = ')',
+        COMMAND = ['list','clear','exit','quit']
     )
 
 class LexicalAnalyzer:
@@ -125,7 +127,10 @@ class LexicalAnalyzer:
         char = self._peekNextChar() # only look at the next char, don't unstack it
 
         if char == '':
-            return Token.ID
+            if (self._token_string in Symbols.COMMAND):
+                return Token.COMMAND
+            else:
+                return Token.ID
 
         elif (char in Symbols.ALPHA) or (char in Symbols.DIGIT):
             self._token_string += char
@@ -136,7 +141,10 @@ class LexicalAnalyzer:
             return Token.ERROR
 
         else:
-            return Token.ID
+            if (self._token_string in Symbols.COMMAND):
+                return Token.COMMAND
+            else:
+                return Token.ID
 
     def _state_leading_digit(self):
 
