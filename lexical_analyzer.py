@@ -1,8 +1,6 @@
 def enum(**enums):
     return type('Enum', (), enums)
 
-from collections import deque
-
 Token = enum(
         ERROR = -1,
         EOS = 'EOS', # End-Of-String
@@ -42,7 +40,8 @@ class LexicalAnalyzer:
 
     # SetInputString sets the input string for lexical analysis.
     def SetInputString(self, input_string):
-        self._stack = deque(list(input_string))
+        self._stack = list(input_string)
+        self._stack.reverse()
 
     # Lex function returns the next token from the input string.
     # The detected token string is stored until the next Lex is called.
@@ -55,19 +54,19 @@ class LexicalAnalyzer:
 
     def _peekNextChar(self):
         try:
-            char = self._stack[0]
+            char = self._stack[-1]
             if char == ' ': # get rid of spaces
-                self._stack.popleft()
+                self._stack.pop()
                 return self._peekNextChar()
             else:
                 return char
-            return self._stack[0]
+            return self._stack[-1]
         except IndexError:
             return ''
 
     def _popChar(self):
         try:
-            char = self._stack.popleft()
+            char = self._stack.pop()
             if char == ' ': # get rid of spaces
                 return self._popChar()
             else:
