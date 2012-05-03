@@ -3,7 +3,7 @@ def enum(**enums):
 
 Token = enum(
         ERROR = -1,
-        EOS = 'EOS', # End-Of-String
+        EOS = 'EOS',  # End-Of-String
         ID = 'ID',
         INT_NUMBER = 'INT_NUMBER',
         REAL_NUMBER = 'REAL_NUMBER',
@@ -32,18 +32,19 @@ Symbols = enum(
         SPACE = ' ',
         LEFT_PARENTHESIS = '(',
         RIGHT_PARENTHESIS = ')',
-        COMMAND = ['list','clear','exit','quit']
+        COMMAND = ['list', 'clear', 'exit', 'quit']
     )
+
 
 class LexicalAnalyzer:
 
-    _token_string = None #Detected string for the current token.
+    _token_string = None  # Detected string for the current token.
     _stack = None
 
     # SetInputString sets the input string for lexical analysis.
     def SetInputString(self, input_string):
         self._stack = list(input_string)
-        self._stack.reverse() # python does not have popleft so we reverse the list tu use pop.
+        self._stack.reverse()  # python does not have popleft so we reverse the list tu use pop.
 
     # Lex function returns the next token from the input string.
     # The detected token string is stored until the next Lex is called.
@@ -57,19 +58,19 @@ class LexicalAnalyzer:
     def _peekNextChar(self):
         try:
             char = self._stack[-1]
-            if char == ' ': # get rid of spaces
+            if char == ' ':  # get rid of spaces
                 self._stack.pop()
                 return self._peekNextChar()
             else:
                 return char
             return self._stack[-1]
-        except IndexError: # stack is empty
+        except IndexError:  # stack is empty
             return ''
 
     def _popChar(self):
         try:
             char = self._stack.pop()
-            if char == ' ': # get rid of spaces
+            if char == ' ':  # get rid of spaces
                 return self._popChar()
             else:
                 return char
@@ -92,7 +93,7 @@ class LexicalAnalyzer:
         elif char in Symbols.DOT:
             return self._state_leading_dot()
 
-        elif char in Symbols.E: # useless but here if we change the definition of E
+        elif char in Symbols.E:  # useless but here if we change the definition of E
             return self._state_id()
 
         elif char == Symbols.PLUS:
@@ -124,7 +125,7 @@ class LexicalAnalyzer:
 
     def _state_id(self):
 
-        char = self._peekNextChar() # only look at the next char, don't unstack it
+        char = self._peekNextChar()  # only look at the next char, don't unstack it
 
         if char == '':
             if (self._token_string in Symbols.COMMAND):
@@ -134,7 +135,7 @@ class LexicalAnalyzer:
 
         elif (char in Symbols.ALPHA) or (char in Symbols.DIGIT):
             self._token_string += char
-            self._popChar() # it's processed, we can delete it
+            self._popChar()  # it's processed, we can delete it
             return self._state_id()
 
         elif char == Symbols.DOT:
@@ -209,7 +210,7 @@ class LexicalAnalyzer:
         if char == '':
             return Token.REAL_NUMBER
 
-        elif char in Symbols.DIGIT: #that's a digit after the dot
+        elif char in Symbols.DIGIT:  # that's a digit after the dot
             self._token_string += char
             self._popChar()
             return self._state_float()
@@ -224,7 +225,6 @@ class LexicalAnalyzer:
 
         else:
             return Token.REAL_NUMBER
-
 
     def _state_sci_e(self):
 

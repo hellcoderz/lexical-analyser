@@ -4,6 +4,7 @@ import sys
 
 from lexical_analyzer import *
 
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
@@ -33,7 +34,6 @@ def main(argv=None):
                 print "calc: lex error in '{0}'".format(input_str)
             else:
                 print "calc: lex {0} - {1}".format(token, lex.GetTokenString())
-
 
             if (token == Token.ERROR or token == Token.EOS):
                 break
