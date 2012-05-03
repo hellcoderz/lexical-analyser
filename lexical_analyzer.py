@@ -19,6 +19,7 @@ Token = enum(
     )
 
 Symbols = enum(
+        BLANK = ' \t',
         DIGIT = '0123456789',
         ALPHA = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
         DOT = '.',
@@ -57,23 +58,13 @@ class LexicalAnalyzer:
 
     def _peekNextChar(self):
         try:
-            char = self._stack[-1]
-            if char == ' ':  # get rid of spaces
-                self._stack.pop()
-                return self._peekNextChar()
-            else:
-                return char
             return self._stack[-1]
         except IndexError:  # stack is empty
             return ''
 
     def _popChar(self):
         try:
-            char = self._stack.pop()
-            if char == ' ':  # get rid of spaces
-                return self._popChar()
-            else:
-                return char
+            return self._stack.pop()
         except IndexError:
             return ''
 
@@ -83,6 +74,9 @@ class LexicalAnalyzer:
 
         if char == '':
             return Token.EOS
+
+        if char in Symbols.BLANK:
+            return self._state_start()  # restart FSM if we found a blank char
 
         elif char in Symbols.DIGIT:
             return self._state_leading_digit()
