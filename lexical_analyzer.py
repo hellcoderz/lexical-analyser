@@ -79,13 +79,13 @@ class LexicalAnalyzer:
             return self._state_start()  # restart FSM if we found a blank char
 
         elif char in Symbols.DIGIT:
-            return self._state_leading_digit()
+            return self._state_int()
 
         elif char in Symbols.ALPHA:
             return self._state_id()
 
         elif char in Symbols.DOT:
-            return self._state_leading_dot()
+            return self._state_float()
 
         elif char in Symbols.E:  # useless but here if we change the definition of E
             return self._state_id()
@@ -141,44 +141,6 @@ class LexicalAnalyzer:
             else:
                 return Token.ID
 
-    def _state_leading_digit(self):
-
-        char = self._peekNextChar()
-
-        if char == '':
-            return Token.INT_NUMBER
-
-        elif char in Symbols.DIGIT:
-            self._token_string += char
-            self._popChar()
-            return self._state_int()
-
-        elif char in Symbols.ALPHA:
-            return Token.ERROR
-
-        elif char == Symbols.DOT:
-            self._token_string += char
-            self._popChar()
-            return self._state_float()
-
-        else:
-            return Token.INT_NUMBER
-
-    def _state_leading_dot(self):
-
-        char = self._peekNextChar()
-
-        if char == '':
-            return Token.ERROR
-
-        elif char in Symbols.DIGIT:
-            self._token_string += char
-            self._popChar()
-            return self._state_float()
-
-        else:
-            return Token.ERROR
-
     def _state_int(self):
 
         char = self._peekNextChar()
@@ -191,7 +153,17 @@ class LexicalAnalyzer:
             self._popChar()
             return self._state_int()
 
-        elif (char in Symbols.ALPHA) or (char == Symbols.DOT):
+        elif char == Symbols.DOT:
+            self._token_string += char
+            self._popChar()
+            return self._state_float()
+
+        elif char in Symbols.E:
+            self._token_string += char
+            self._popChar()
+            return self._state_sci_e()
+
+        elif char in Symbols.ALPHA:
             return Token.ERROR
 
         else:
