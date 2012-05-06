@@ -2,32 +2,53 @@ from lexical_analyzer import *
 import sys
 
 Terminal = enum(
-                S = 1,
-                E = 2,
-                T = 3,
-                F = 4,
-                B = 5
+                S = 0,
+                E = 1,
+                T = 2,
+                F = 3,
+                B = 4
                 )
 
 Action = enum(
-            S = 1,
-            R = 2,
-            ACCEPT = 3
+            S = 'S',
+            R = 'R',
+            ACCEPT = 'A'
             )
+
+STATES_COUNT = 33
+TOKEN_COUNT = 23
+TERMINAL_COUNT = 5
+RULES_COUNT = 18 + 1  # index from 1
+
 
 class ParsingTable:
 
     def __init__(self):
-        self.actions = [[None]*23]*33
-        self.gotos = [[None]*6]*33
-        self.lhs = [None]*19
-        self.rhs = [None]*19
+
+        self.actions = []
+        for i in range(STATES_COUNT):
+            self.actions.append([])
+            for j in range(TOKEN_COUNT):
+                self.actions[i].append(None)
+
+        self.gotos = []
+        for k in range(STATES_COUNT):
+            self.gotos.append([])
+            for l in range(TERMINAL_COUNT):
+                self.gotos[k].append(None)
+
+        self.lhs = []
+        for m in range(RULES_COUNT):
+            self.lhs.append(None)
+
+        self.rhs = []
+        for n in range(RULES_COUNT):
+            self.rhs.append(None)
 
     def add_action(self, current_state, token, action, action_arg):
         self.actions[current_state][token] = (action, action_arg)
 
     def add_goto(self, current_state, nonterminal, next_state):
-
         self.gotos[current_state][nonterminal] = next_state
 
     def add_lhs(self, rule, nonterminal):
@@ -35,6 +56,65 @@ class ParsingTable:
 
     def add_rhs(self, rule, symbol_count):
         self.rhs[rule] = symbol_count
+
+    def get_action(self, current_state, token):
+        return self.actions[current_state][token]
+
+    def get_goto(self, current_state, nonterminal):
+        return self.gotos[current_state][nonterminal]
+
+    def get_lhs(self, rule):
+        return self.lhs[rule]
+
+    def get_rhs(self, rule):
+        return self.rhs[rule]
+
+    def __str__(self):
+        str = '### ACTION TABLE ### \n\n'
+        str += '____|'
+        for k in range(TOKEN_COUNT):
+            str += '  %02d |' % k
+
+        str += '\n'
+
+        for m in range(TERMINAL_COUNT):
+            str += '  %02d |' % m
+
+        str += '\n'
+
+        for i in range(STATES_COUNT):
+            str += ' %02d |' % i
+            for j in range(len(self.actions[i])):
+                if self.actions[i][j] == None:
+                    str += '     |'
+                else:
+                    str += ' %s%02d |' % self.actions[i][j]
+
+            str += '|'
+
+            for l in range(len(self.gotos[i])):
+                if self.gotos[i][l] == None:
+                    str += '     |'
+                else:
+                    str += '  %02d |' % self.gotos[i][l]
+
+            str += '\n'
+
+        str += '\n\n### RHS ###\n\n'
+
+        for n in range(RULES_COUNT):
+            if n == 0:
+                continue
+            str += '%02d -> %d terms\n' % (n, self.rhs[n])
+
+        str += '\n\n### LHS ###\n\n'
+
+        for o in range(RULES_COUNT):
+            if o == 0:
+                continue
+            str += '%02d -> %d\n' % (o, self.lhs[o])
+
+        return str
 
 
 class Parser:
@@ -50,8 +130,9 @@ class Parser:
         t.add_action(0, Token.CMD_CLEAR, Action.S, 2)
         t.add_action(0, Token.PLUS, Action.S, 8)
         t.add_action(0, Token.MINUS, Action.S, 9)
+        t.add_action(0, Token.EOS, Action.S, 1)
 
-        t.add_action(1, Token.EOS, Action.ACCEPT, None)
+        t.add_action(1, Token.EOS, Action.ACCEPT, -1)
 
         t.add_action(2, Token.EOS, Action.R, 1)
 
@@ -331,48 +412,112 @@ class Parser:
         t.add_lhs(17, Terminal.B)
         t.add_lhs(18, Terminal.B)
 
+        # print t
+
         self.table = t
 
-    @classmethod
-    def ParseInputString(cls, input_str):
+    def ParseInputString(self, input_str):
+
+        self.init_stack()
+
         lexer_ = LexicalAnalyzer()
         lexer_.SetInputString(input_str)
 
         token = Token.ERROR
 
-        while True:
+        error = False
+        accepted = False
+
+        while (not error and not accepted):
             token = lexer_.Lex()
             if (token == Token.ERROR):
                 cls.OnLexerError()
-            else:
-                cls.OnShift(token, lexer_.GetTokenString(), 0)
-
-            if (token == Token.ERROR) or (token == Token.EOS):
                 break
+            else:
 
-        if token != Token.ERROR:
-            cls.OnAccept()
+                while True:
+
+                    try:
+                        (action, arg) = self.table.get_action(self.current_state, token)
+                    except TypeError:  # probably returned None
+                        error = True
+                        break
+
+                    if action == Action.S:
+
+                        if arg == None:
+                            error = True
+                            break
+
+                        self.push_state(arg)
+                        self.OnShift(token, lexer_.GetTokenString(), arg)
+                        break
+
+                    elif action == Action.R:
+
+                        if arg == None:
+                            error = True
+                            break
+
+                        rhs = self.table.get_rhs(arg)
+                        lhs = self.table.get_lhs(arg)
+
+                        if lhs == None or rhs == None:
+                            error = True
+                            break
+
+                        self.pop_states(rhs)
+
+                        goto = self.table.get_goto(self.current_state, lhs)
+                        if goto == None:
+                            error = True
+                            break
+
+                        self.push_state(goto)
+                        self.OnReduce(arg, goto)
+
+                    elif action == Action.ACCEPT:
+                        accepted = True
+                        break
+                    else:
+                        error = True
+                        break
+
+
+        if error:
+            self.OnParseError()
+        elif accepted:
+            self.OnAccept()
 
         return token == Token.EOS
 
-    @classmethod
-    def OnShift(cls, token, token_string, next_state):
+    def init_stack(self):
+        self.stack = [0]
+
+    def push_state(self, state):
+        self.stack.append(state)
+
+    def pop_states(self, number):
+        for i in range(number):
+            self.stack.pop()
+
+    @property
+    def current_state(self):
+        return self.stack[-1]
+
+    def OnShift(self, token, token_string, next_state):
         sys.stdout.write(' S%s[%s:%s]' % (next_state, token, token_string))
         return True
 
-    @classmethod
-    def OnReduce(cls, rule, next_state):
+    def OnReduce(self, rule, next_state):
         sys.stdout.write(' R%s,%s' % (rule, next_state))
         return True
 
-    @classmethod
-    def OnAccept(cls):
+    def OnAccept(self):
         sys.stdout.write(" **\n")
 
-    @classmethod
-    def OnParseError(cls):
+    def OnParseError(self):
         sys.stdout.write(' ParseError\n')
 
-    @classmethod
-    def OnLexerError(cls):
+    def OnLexerError(self):
         sys.stdout.write(' LexerError\n')
