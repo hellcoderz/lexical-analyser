@@ -15,7 +15,9 @@ Token = enum(
         EQUAL = 'EQUAL',
         LEFT_PARENTHESIS = 'LEFT_PARENTHESIS',
         RIGHT_PARENTHESIS = 'RIGHT_PARENTHESIS',
-        COMMAND = 'COMMAND'
+        CMD_EXIT = 20,
+        CMD_LIST = 21,
+        CMD_CLEAR = 22
     )
 
 Symbols = enum(
@@ -33,7 +35,9 @@ Symbols = enum(
         SPACE = ' ',
         LEFT_PARENTHESIS = '(',
         RIGHT_PARENTHESIS = ')',
-        COMMAND = ['list', 'clear', 'exit', 'quit']
+        CMD_EXIT = ['exit', 'quit'],
+        CMD_LIST = 'list',
+        CMD_CLEAR = 'clear'
     )
 
 
@@ -122,10 +126,7 @@ class LexicalAnalyzer:
         char = self._peekNextChar()  # only look at the next char, don't unstack it
 
         if char == '':
-            if (self._token_string in Symbols.COMMAND):
-                return Token.COMMAND
-            else:
-                return Token.ID
+            return self._parse_id()
 
         elif (char in Symbols.ALPHA) or (char in Symbols.DIGIT):
             self._token_string += char
@@ -136,10 +137,7 @@ class LexicalAnalyzer:
             return Token.ERROR
 
         else:
-            if (self._token_string in Symbols.COMMAND):
-                return Token.COMMAND
-            else:
-                return Token.ID
+            return self._parse_id()
 
     def _state_int(self):
 
@@ -244,3 +242,13 @@ class LexicalAnalyzer:
 
         else:
             return Token.REAL_NUMBER
+
+    def _parse_id(self):
+            if (self._token_string in Symbols.CMD_EXIT):
+                return Token.CMD_EXIT
+            elif self._token_string == Symbols.CMD_LIST:
+                return Token.CMD_LIST
+            elif self._token_string == Symbols.CMD_CLEAR:
+                return Token.CMD_CLEAR
+            else:
+                return Token.ID
