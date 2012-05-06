@@ -9,6 +9,8 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
 
+    parser = Parser()
+
     # get user input
     while True:
 
@@ -22,7 +24,7 @@ def main(argv=None):
 
         print "input: '" + input_str + "'"
 
-        Parser.ParseInputString(input_str)
+        parser.ParseInputString(input_str)
 
     return 0
 

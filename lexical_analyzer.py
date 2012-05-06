@@ -7,6 +7,7 @@ Token = enum(
         ID = 1,
         INT_NUMBER = 2,
         REAL_NUMBER = 2,
+        NUMBER = 2,
         PLUS = 10,
         MINUS = 11,
         TIMES = 12,
