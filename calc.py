@@ -2,17 +2,15 @@
 
 import sys
 
-from lexical_analyzer import *
+from parser import Parser
 
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv
 
-    lex = LexicalAnalyzer()
-
     # get user input
-    while 1:
+    while True:
 
         try:
             input_str = raw_input('> ')
@@ -22,21 +20,9 @@ def main(argv=None):
             print ''
             break
 
-        # Setup lexical analyzer
-        lex.SetInputString(input_str)
-        token = Token.ERROR
+        print "input: '" + input_str + "'"
 
-        while True:
-
-            token = lex.Lex()
-
-            if token == Token.ERROR:
-                print "calc: lex error in '{0}'".format(input_str)
-            else:
-                print "calc: lex {0} - {1}".format(token, lex.GetTokenString())
-
-            if (token == Token.ERROR or token == Token.EOS):
-                break
+        Parser.ParseInputString(input_str)
 
     return 0
 
