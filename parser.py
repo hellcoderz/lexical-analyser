@@ -418,15 +418,15 @@ class Parser:
 
     def ParseInputString(self, input_str):
 
-        self.init_stack()
-
-        lex = LexicalAnalyzer()
-        lex.set_input(input_str)
-
-        error = False
-        accepted = False
-
         try:
+            self.init_stack()
+
+            lex = LexicalAnalyzer()
+            lex.set_input(input_str)
+
+            error = False
+            accepted = False
+
             for (token, token_string) in lex:
 
                 while True:

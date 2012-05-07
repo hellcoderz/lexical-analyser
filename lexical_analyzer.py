@@ -1,11 +1,11 @@
 from constants import *
-from FSM import FiniteStateMachine
+from FSM import LexerFiniteStateMachine
 
 class LexicalAnalyzer:
 
     def __init__(self):
 
-        self.machine = FiniteStateMachine(STATE_SIZE, SYMBOL_SIZE)
+        self.machine = LexerFiniteStateMachine(STATE_SIZE, SYMBOL_SIZE)
 
         # in the form of : current_state, next_symbol, destination_state, accepted_token_so_far
 
@@ -71,7 +71,11 @@ class LexicalAnalyzer:
 
     def set_input(self, string):
         self.input = string
-        self.machine.set_input(string)
+        try:
+            self.machine.set_input(string)
+        except FSMException:
+            raise LexerException
+
 
     def __iter__(self):
         return self
@@ -81,20 +85,25 @@ class LexicalAnalyzer:
         token_string = ''
         token = None
 
-        for (token, char) in self.machine:
-            token_string += char
+        try:
 
-        if token == Token.ID:  # parse for reserved words
-            if token_string in ['exit', 'quit']:
-                token = Token.CMD_EXIT
-            elif token_string in ['clear']:
-                token = Token.CMD_CLEAR
-            elif token_string in ['list']:
-                token = Token.CMD_LIST
+            for (state, token, char) in self.machine:
+                token_string += char
 
-        #print 'LEX : token %s in char "%s"' % (token, token_string)
+            if token == Token.ID:  # parse for reserved words
+                if token_string in ['exit', 'quit']:
+                    token = Token.CMD_EXIT
+                elif token_string in ['clear']:
+                    token = Token.CMD_CLEAR
+                elif token_string in ['list']:
+                    token = Token.CMD_LIST
 
-        if token == None:  # skip blanks
-            return self.next()
-        else:
-            return (token, token_string)
+            #print 'LEX : token %s in char "%s"' % (token, token_string)
+
+            if token == None:  # skip blanks
+                return self.next()
+            else:
+                return (token, token_string)
+
+        except FSMException:
+            raise LexerException

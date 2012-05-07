@@ -11,9 +11,9 @@ class FiniteStateMachine:
                 l.append((None))
             self.transitions.append(l)
 
-    def set_input(self, string):
-        self.input = list(string)
-        self.input.reverse()
+    def set_input(self, inp):
+        self.stack = list(inp)
+        self.stack.reverse()
 
     def add_transition(self, start, symbol, destination, arg):
         self.transitions[start][symbol] = (destination, arg)
@@ -21,48 +21,8 @@ class FiniteStateMachine:
     def get_transition(self, start, symbol):
         return self.transitions[start][symbol]
 
-    def get_next_symbol(self):
-        try:
-            next_char = self.input[-1]
-        except IndexError:
-            return Symbol.EPSILON
-
-        if next_char == '':
-            return Symbol.EPSILON
-        elif next_char in ' \t':
-            return Symbol.BLANK
-        elif next_char in '0123456789':
-            return Symbol.DIGIT
-        elif next_char in 'abcdfghijklmnopqrstuvwxyzABCDFGHIJKLMNOPQRSTUVWXYZ_':  # without E
-            return Symbol.ALPHA
-        elif next_char in '.,':
-            return Symbol.DOT
-        elif next_char in 'eE':
-            return Symbol.E
-        elif next_char in '+':
-            return Symbol.OP_PLUS
-        elif next_char in '-':
-            return Symbol.OP_MINUS
-        elif next_char in '*':
-            return Symbol.OP_MUL
-        elif next_char in '/':
-            return Symbol.OP_DIV
-        elif next_char in '^':
-            return Symbol.OP_POW
-        elif next_char in '=':
-            return Symbol.OP_ASSIGN
-        elif next_char in '(':
-            return Symbol.OP_LPAREN
-        elif next_char in ')':
-            return Symbol.OP_RPAREN
-        else:
-            raise LexerException
-
-    def __iter__(self):
-        self.state = State.START
-        #print '=============='
-        #print 'FSM IN : %s' % self.input
-        return self
+    def pop(self):
+        return self.stack.pop()
 
     def next(self):
 
@@ -70,11 +30,14 @@ class FiniteStateMachine:
             #print 'FSM: In ACCEPT, Stop iter'
             raise StopIteration
 
+        try:
+            next_symbol = self.stack[-1]
+        except IndexError:
+            next_symbol = Symbol.EPSILON
 
-        next_symbol = self.get_next_symbol()
         if next_symbol == Symbol.BLANK:  # consume whitespace and restart machine
             #print 'FSM: Next symbol = BLANK'
-            self.input.pop()
+            self.pop()
             raise StopIteration
         else:
             #print 'FSM: Next symbol = %s' % next_symbol
@@ -88,11 +51,63 @@ class FiniteStateMachine:
 
         if dest == State.ERROR:
             #print 'FSM : In State.ERROR'
-            raise LexerException
+            raise FSMException
 
         self.state = dest
+        accepted_symbol = self.pop() if (next_symbol != Symbol.EPSILON) else ''
+        return (dest, arg, accepted_symbol)
 
-        accepted_token = arg
-        accepted_token_string = self.input.pop() if (next_symbol != Symbol.EPSILON) else ''
 
-        return (accepted_token, accepted_token_string)
+class LexerFiniteStateMachine(FiniteStateMachine):
+
+    def __iter__(self):
+        self.state = State.START
+        #print '=============='
+        #print 'FSM IN : %s' % self.stack
+        return self
+
+    def set_input(self, string):
+        self.input = list(string)
+        self.input.reverse()
+
+        self.stack = []
+        for char in self.input:
+            self.stack.append(self.get_symbol(char))
+
+    def pop(self):
+
+        self.stack.pop()
+        return self.input.pop()
+
+    def get_symbol(self, char):
+
+        if char == '':
+            return Symbol.EPSILON
+        elif char in ' \t':
+            return Symbol.BLANK
+        elif char in '0123456789':
+            return Symbol.DIGIT
+        elif char in 'abcdfghijklmnopqrstuvwxyzABCDFGHIJKLMNOPQRSTUVWXYZ_':  # without E
+            return Symbol.ALPHA
+        elif char in '.,':
+            return Symbol.DOT
+        elif char in 'eE':
+            return Symbol.E
+        elif char in '+':
+            return Symbol.OP_PLUS
+        elif char in '-':
+            return Symbol.OP_MINUS
+        elif char in '*':
+            return Symbol.OP_MUL
+        elif char in '/':
+            return Symbol.OP_DIV
+        elif char in '^':
+            return Symbol.OP_POW
+        elif char in '=':
+            return Symbol.OP_ASSIGN
+        elif char in '(':
+            return Symbol.OP_LPAREN
+        elif char in ')':
+            return Symbol.OP_RPAREN
+        else:
+            raise FSMException

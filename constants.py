@@ -55,3 +55,6 @@ Token = enum(
 
 class LexerException(Exception):
     pass
+
+class FSMException(Exception):
+    pass
