@@ -1,255 +1,100 @@
-def enum(**enums):
-    return type('Enum', (), enums)
-
-Token = enum(
-        ERROR = -1,
-        EOS = 0,  # End-Of-String
-        ID = 1,
-        INT_NUMBER = 2,
-        REAL_NUMBER = 2,
-        NUMBER = 2,
-        PLUS = 10,
-        MINUS = 11,
-        TIMES = 12,
-        DIVIDE = 13,
-        POWER = 14,
-        EQUAL = 15,
-        LEFT_PARENTHESIS = 16,
-        RIGHT_PARENTHESIS = 17,
-        CMD_EXIT = 20,
-        CMD_LIST = 21,
-        CMD_CLEAR = 22
-    )
-
-Symbols = enum(
-        BLANK = ' \t',
-        DIGIT = '0123456789',
-        ALPHA = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        DOT = '.',
-        E = 'eE',
-        PLUS = '+',
-        MINUS = '-',
-        TIMES = '*',
-        DIVIDE = '/',
-        POWER = '^',
-        EQUAL = '=',
-        SPACE = ' ',
-        LEFT_PARENTHESIS = '(',
-        RIGHT_PARENTHESIS = ')',
-        CMD_EXIT = ['exit', 'quit'],
-        CMD_LIST = 'list',
-        CMD_CLEAR = 'clear'
-    )
-
+from constants import *
+from FSM import FiniteStateMachine
 
 class LexicalAnalyzer:
 
-    _token_string = None  # Detected string for the current token.
-    _stack = None
+    def __init__(self):
 
-    # SetInputString sets the input string for lexical analysis.
-    def SetInputString(self, input_string):
-        self._stack = list(input_string)
-        self._stack.reverse()  # python does not have popleft so we reverse the list tu use pop.
+        self.machine = FiniteStateMachine(STATE_SIZE, SYMBOL_SIZE)
 
-    # Lex function returns the next token from the input string.
-    # The detected token string is stored until the next Lex is called.
-    def Lex(self):
-        return self._state_start()
+        # in the form of : current_state, next_symbol, destination_state, accepted_token_so_far
 
-    # GetTokenString returns the character string for the detected token.
-    def GetTokenString(self):
-        return self._token_string
+        self.machine.add_transition(State.START, Symbol.EPSILON, State.ACCEPT, Token.EOS)
+        self.machine.add_transition(State.START, Symbol.DIGIT, State.INT, Token.NUMBER)
+        self.machine.add_transition(State.START, Symbol.ALPHA, State.ID, Token.ID)
+        self.machine.add_transition(State.START, Symbol.DOT, State.DOT, None)
+        self.machine.add_transition(State.START, Symbol.E, State.ID, Token.ID)
+        self.machine.add_transition(State.START, Symbol.OP_PLUS, State.ACCEPT, Token.OP_PLUS)
+        self.machine.add_transition(State.START, Symbol.OP_MINUS, State.ACCEPT, Token.OP_MINUS)
+        self.machine.add_transition(State.START, Symbol.OP_MUL, State.ACCEPT, Token.OP_MUL)
+        self.machine.add_transition(State.START, Symbol.OP_DIV, State.ACCEPT, Token.OP_DIV)
+        self.machine.add_transition(State.START, Symbol.OP_POW, State.ACCEPT, Token.OP_POW)
+        self.machine.add_transition(State.START, Symbol.OP_ASSIGN, State.ACCEPT, Token.OP_ASSIGN)
+        self.machine.add_transition(State.START, Symbol.OP_LPAREN, State.ACCEPT, Token.OP_LPAREN)
+        self.machine.add_transition(State.START, Symbol.OP_RPAREN, State.ACCEPT, Token.OP_RPAREN)
 
-    def _peekNextChar(self):
-        try:
-            return self._stack[-1]
-        except IndexError:  # stack is empty
-            return ''
+        self.machine.add_transition(State.ID, Symbol.EPSILON, State.ACCEPT, Token.ID)
+        self.machine.add_transition(State.ID, Symbol.DIGIT, State.ID, Token.ID)
+        self.machine.add_transition(State.ID, Symbol.ALPHA, State.ID, Token.ID)
+        self.machine.add_transition(State.ID, Symbol.DOT, State.ERROR, None)
+        self.machine.add_transition(State.ID, Symbol.E, State.ID, Token.ID)
 
-    def _popChar(self):
-        try:
-            return self._stack.pop()
-        except IndexError:
-            return ''
+        self.machine.add_transition(State.DOT, Symbol.EPSILON, State.ERROR, None)
+        self.machine.add_transition(State.DOT, Symbol.DIGIT, State.FLOAT, Token.NUMBER)
+        self.machine.add_transition(State.DOT, Symbol.ALPHA, State.ERROR, None)
+        self.machine.add_transition(State.DOT, Symbol.DOT, State.ERROR, None)
+        self.machine.add_transition(State.DOT, Symbol.E, State.ERROR, None)
 
-    def _state_start(self):
+        self.machine.add_transition(State.FLOAT, Symbol.EPSILON, State.ACCEPT, Token.NUMBER)
+        self.machine.add_transition(State.FLOAT, Symbol.DIGIT, State.FLOAT, Token.NUMBER)
+        self.machine.add_transition(State.FLOAT, Symbol.ALPHA, State.ERROR, None)
+        self.machine.add_transition(State.FLOAT, Symbol.DOT, State.ERROR, None)
+        self.machine.add_transition(State.FLOAT, Symbol.E, State.SCI_E, None)
 
-        char = self._token_string = self._popChar()
+        self.machine.add_transition(State.INT, Symbol.EPSILON, State.ACCEPT, Token.NUMBER)
+        self.machine.add_transition(State.INT, Symbol.DIGIT, State.INT, Token.NUMBER)
+        self.machine.add_transition(State.INT, Symbol.ALPHA, State.ERROR, None)
+        self.machine.add_transition(State.INT, Symbol.DOT, State.FLOAT, Token.NUMBER)
+        self.machine.add_transition(State.INT, Symbol.E, State.SCI_E, None)
 
-        if char == '':
-            return Token.EOS
+        self.machine.add_transition(State.SCI_E, Symbol.EPSILON, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E, Symbol.DIGIT, State.REAL, Token.NUMBER)
+        self.machine.add_transition(State.SCI_E, Symbol.ALPHA, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E, Symbol.DOT, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E, Symbol.E, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E, Symbol.OP_PLUS, State.SCI_E_SIGNED, None)
+        self.machine.add_transition(State.SCI_E, Symbol.OP_MINUS, State.SCI_E_SIGNED, None)
 
-        if char in Symbols.BLANK:
-            return self._state_start()  # restart FSM if we found a blank char
+        self.machine.add_transition(State.SCI_E_SIGNED, Symbol.EPSILON, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E_SIGNED, Symbol.DIGIT, State.REAL, Token.NUMBER)
+        self.machine.add_transition(State.SCI_E_SIGNED, Symbol.ALPHA, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E_SIGNED, Symbol.DOT, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E_SIGNED, Symbol.E, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E_SIGNED, Symbol.OP_PLUS, State.ERROR, None)
+        self.machine.add_transition(State.SCI_E_SIGNED, Symbol.OP_MINUS, State.ERROR, None)
 
-        elif char in Symbols.DIGIT:
-            return self._state_int()
+        self.machine.add_transition(State.REAL, Symbol.EPSILON, State.ACCEPT, Token.NUMBER)
+        self.machine.add_transition(State.REAL, Symbol.DIGIT, State.REAL, Token.NUMBER)
+        self.machine.add_transition(State.REAL, Symbol.ALPHA, State.ERROR, None)
+        self.machine.add_transition(State.REAL, Symbol.DOT, State.ERROR, None)
+        self.machine.add_transition(State.REAL, Symbol.E, State.ERROR, None)
 
-        elif char in Symbols.ALPHA:
-            return self._state_id()
+    def set_input(self, string):
+        self.input = string
+        self.machine.set_input(string)
 
-        elif char in Symbols.DOT:
-            return self._state_float()
+    def __iter__(self):
+        return self
 
-        elif char in Symbols.E:  # useless but here if we change the definition of E
-            return self._state_id()
+    def next(self):
 
-        elif char == Symbols.PLUS:
-            return Token.PLUS
+        token_string = ''
+        token = None
 
-        elif char == Symbols.MINUS:
-            return Token.MINUS
+        for (token, char) in self.machine:
+            token_string += char
 
-        elif char == Symbols.TIMES:
-            return Token.TIMES
+        if token == Token.ID:  # parse for reserved words
+            if token_string in ['exit', 'quit']:
+                token = Token.CMD_EXIT
+            elif token_string in ['clear']:
+                token = Token.CMD_CLEAR
+            elif token_string in ['list']:
+                token = Token.CMD_LIST
 
-        elif char == Symbols.DIVIDE:
-            return Token.DIVIDE
+        #print 'LEX : token %s in char "%s"' % (token, token_string)
 
-        elif char == Symbols.POWER:
-            return Token.POWER
-
-        elif char == Symbols.EQUAL:
-            return Token.EQUAL
-
-        elif char == Symbols.LEFT_PARENTHESIS:
-            return Token.LEFT_PARENTHESIS
-
-        elif char == Symbols.RIGHT_PARENTHESIS:
-            return Token.RIGHT_PARENTHESIS
-
+        if token == None:  # skip blanks
+            return self.next()
         else:
-            return Token.ERROR
-
-    def _state_id(self):
-
-        char = self._peekNextChar()  # only look at the next char, don't unstack it
-
-        if char == '':
-            return self._parse_id()
-
-        elif (char in Symbols.ALPHA) or (char in Symbols.DIGIT):
-            self._token_string += char
-            self._popChar()  # it's processed, we can delete it
-            return self._state_id()
-
-        elif char == Symbols.DOT:
-            return Token.ERROR
-
-        else:
-            return self._parse_id()
-
-    def _state_int(self):
-
-        char = self._peekNextChar()
-
-        if char == '':
-            return Token.INT_NUMBER
-
-        elif char in Symbols.DIGIT:
-            self._token_string += char
-            self._popChar()
-            return self._state_int()
-
-        elif char == Symbols.DOT:
-            self._token_string += char
-            self._popChar()
-            return self._state_float()
-
-        elif char in Symbols.E:
-            self._token_string += char
-            self._popChar()
-            return self._state_sci_e()
-
-        elif char in Symbols.ALPHA:
-            return Token.ERROR
-
-        else:
-            return Token.INT_NUMBER
-
-    def _state_float(self):
-
-        char = self._peekNextChar()
-
-        if char == '':
-            return Token.REAL_NUMBER
-
-        elif char in Symbols.DIGIT:  # that's a digit after the dot
-            self._token_string += char
-            self._popChar()
-            return self._state_float()
-
-        elif char in Symbols.E:
-            self._token_string += char
-            self._popChar()
-            return self._state_sci_e()
-
-        elif (char in Symbols.ALPHA) or (char == Symbols.DOT):
-            return Token.ERROR
-
-        else:
-            return Token.REAL_NUMBER
-
-    def _state_sci_e(self):
-
-        char = self._peekNextChar()
-
-        if char == '':
-            return Token.ERROR
-
-        elif char in Symbols.DIGIT:
-            self._token_string += char
-            self._popChar()
-            return self._state_real()
-
-        elif (char == Symbols.PLUS) or (char == Symbols.MINUS):
-            self._token_string += char
-            self._popChar()
-            return self._state_sci_e_signed()
-
-        else:
-            return Token.ERROR
-
-    def _state_sci_e_signed(self):
-
-        char = self._peekNextChar()
-
-        if char == '':
-            return Token.ERROR
-
-        elif char in Symbols.DIGIT:
-            self._token_string += char
-            self._popChar()
-            return self._state_real()
-
-        else:
-            return Token.ERROR
-
-    def _state_real(self):
-
-        char = self._peekNextChar()
-
-        if char == '':
-            return Token.REAL_NUMBER
-
-        elif char in Symbols.DIGIT:
-            self._token_string += char
-            self._popChar()
-            return self._state_real()
-
-        elif (char in Symbols.ALPHA) or (char == Symbols.DOT):
-            return Token.ERROR
-
-        else:
-            return Token.REAL_NUMBER
-
-    def _parse_id(self):
-            if (self._token_string in Symbols.CMD_EXIT):
-                return Token.CMD_EXIT
-            elif self._token_string == Symbols.CMD_LIST:
-                return Token.CMD_LIST
-            elif self._token_string == Symbols.CMD_CLEAR:
-                return Token.CMD_CLEAR
-            else:
-                return Token.ID
+            return (token, token_string)
