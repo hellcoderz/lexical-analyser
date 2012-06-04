@@ -132,6 +132,7 @@ class Parser:
         t.add_action(0, Token.OP_PLUS, Action.S, 8)
         t.add_action(0, Token.OP_MINUS, Action.S, 9)
         t.add_action(0, Token.EOS, Action.S, 1)
+        t.add_action(0, Token.OP_LPAREN, Action.S, 11)
 
         t.add_action(1, Token.EOS, Action.ACCEPT, -1)
 
@@ -290,12 +291,12 @@ class Parser:
         t.add_action(26, Token.OP_RPAREN, Action.R, 8)
         t.add_action(26, Token.EOS, Action.R, 8)
 
-        t.add_action(27, Token.OP_PLUS, Action.R, 15)
-        t.add_action(27, Token.OP_MINUS, Action.R, 15)
-        t.add_action(27, Token.OP_MUL, Action.R, 15)
-        t.add_action(27, Token.OP_DIV, Action.R, 15)
-        t.add_action(27, Token.OP_RPAREN, Action.R, 15)
-        t.add_action(27, Token.EOS, Action.R, 15)
+        t.add_action(27, Token.OP_PLUS, Action.R, 11)
+        t.add_action(27, Token.OP_MINUS, Action.R, 11)
+        t.add_action(27, Token.OP_MUL, Action.R, 11)
+        t.add_action(27, Token.OP_DIV, Action.R, 11)
+        t.add_action(27, Token.OP_RPAREN, Action.R, 11)
+        t.add_action(27, Token.EOS, Action.R, 11)
 
         t.add_action(28, Token.ID, Action.S, 20)
         t.add_action(28, Token.NUMBER, Action.S, 10)
