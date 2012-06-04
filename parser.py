@@ -1,7 +1,5 @@
 from constants import *
 from lexical_analyzer import LexicalAnalyzer
-import sys
-
 
 
 class ParsingTable:
@@ -52,52 +50,52 @@ class ParsingTable:
     def get_rhs(self, rule):
         return self.rhs[rule]
 
-    def __str__(self):
-        str = '### ACTION TABLE ### \n\n'
-        str += '____|'
-        for k in range(TOKEN_COUNT):
-            str += '  %02d |' % k
+    # def __str__(self):
+    #     str = '### ACTION TABLE ### \n\n'
+    #     str += '____|'
+    #     for k in range(TOKEN_COUNT):
+    #         str += '  %02d |' % k
 
-        str += '\n'
+    #     str += '\n'
 
-        for m in range(TERMINAL_COUNT):
-            str += '  %02d |' % m
+    #     for m in range(TERMINAL_COUNT):
+    #         str += '  %02d |' % m
 
-        str += '\n'
+    #     str += '\n'
 
-        for i in range(STATES_COUNT):
-            str += ' %02d |' % i
-            for j in range(len(self.actions[i])):
-                if self.actions[i][j] == None:
-                    str += '     |'
-                else:
-                    str += ' %s%02d |' % self.actions[i][j]
+    #     for i in range(STATES_COUNT):
+    #         str += ' %02d |' % i
+    #         for j in range(len(self.actions[i])):
+    #             if self.actions[i][j] == None:
+    #                 str += '     |'
+    #             else:
+    #                 str += ' %s%02d |' % self.actions[i][j]
 
-            str += '|'
+    #         str += '|'
 
-            for l in range(len(self.gotos[i])):
-                if self.gotos[i][l] == None:
-                    str += '     |'
-                else:
-                    str += '  %02d |' % self.gotos[i][l]
+    #         for l in range(len(self.gotos[i])):
+    #             if self.gotos[i][l] == None:
+    #                 str += '     |'
+    #             else:
+    #                 str += '  %02d |' % self.gotos[i][l]
 
-            str += '\n'
+    #         str += '\n'
 
-        str += '\n\n### RHS ###\n\n'
+    #     str += '\n\n### RHS ###\n\n'
 
-        for n in range(RULES_COUNT):
-            if n == 0:
-                continue
-            str += '%02d -> %d terms\n' % (n, self.rhs[n])
+    #     for n in range(RULES_COUNT):
+    #         if n == 0:
+    #             continue
+    #         str += '%02d -> %d terms\n' % (n, self.rhs[n])
 
-        str += '\n\n### LHS ###\n\n'
+    #     str += '\n\n### LHS ###\n\n'
 
-        for o in range(RULES_COUNT):
-            if o == 0:
-                continue
-            str += '%02d -> %d\n' % (o, self.lhs[o])
+    #     for o in range(RULES_COUNT):
+    #         if o == 0:
+    #             continue
+    #         str += '%02d -> %d\n' % (o, self.lhs[o])
 
-        return str
+    #     return str
 
 
 class Parser:
@@ -401,13 +399,12 @@ class Parser:
 
         self.table = t
 
-    def getActionGenerator(self, input_str):
+    def parseIntputString(self, input_str):
 
         self.init_stack()
         self.lex.set_input(input_str)
 
         error = False
-        accepted = False
 
         for (token, token_string) in self.lex:
 
@@ -455,17 +452,13 @@ class Parser:
                     yield (Action.R, arg, rhs)
 
                 elif action == Action.ACCEPT:
-                    accepted = True
-                    break
+                    raise StopIteration
                 else:
                     error = True
                     break
 
             if error:
                 raise ParserException()
-                break
-            elif accepted:
-                raise StopIteration
                 break
 
     def init_stack(self):

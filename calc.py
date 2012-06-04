@@ -5,6 +5,7 @@ from constants import *
 from calculator import Calculator
 from variable_table import VariableTable
 
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv

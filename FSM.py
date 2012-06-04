@@ -1,5 +1,6 @@
 from constants import *
 
+
 class FiniteStateMachine:
 
     def __init__(self, STATE_SIZE, SYMBOL_SIZE):

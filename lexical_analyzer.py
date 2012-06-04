@@ -1,6 +1,7 @@
 from constants import *
 from FSM import LexerFiniteStateMachine
 
+
 class LexicalAnalyzer:
 
     def __init__(self):
@@ -75,7 +76,6 @@ class LexicalAnalyzer:
             self.machine.set_input(string)
         except FSMException:
             raise LexerException
-
 
     def __iter__(self):
         return self

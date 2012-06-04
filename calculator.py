@@ -13,7 +13,7 @@ class Calculator():
     def run(self, input_str):
 
         self.stack = []
-        parser_generator = self.parser.getActionGenerator(input_str)
+        parser_generator = self.parser.parseIntputString(input_str)
 
         for (action, arg1, arg2) in parser_generator:
 

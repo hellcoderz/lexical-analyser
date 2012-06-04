@@ -20,6 +20,9 @@ class VariableTable():
         return ''
 
     def list(self):
+        return self.__str__()
+
+    def __str__(self):
         s = ''
         for (ident, value) in self.table.iteritems():
             s += '%s = %s' % (ident, value)
