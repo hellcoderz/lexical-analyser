@@ -2,24 +2,6 @@ from constants import *
 from lexical_analyzer import LexicalAnalyzer
 import sys
 
-Terminal = enum(
-                S = 0,
-                E = 1,
-                T = 2,
-                F = 3,
-                B = 4
-                )
-
-Action = enum(
-            S = 'S',
-            R = 'R',
-            ACCEPT = 'A'
-            )
-
-STATES_COUNT = 33
-TOKEN_COUNT = 23
-TERMINAL_COUNT = 5
-RULES_COUNT = 18 + 1  # index from 1
 
 
 class ParsingTable:
@@ -121,6 +103,8 @@ class ParsingTable:
 class Parser:
 
     def __init__(self):
+
+        self.lex = LexicalAnalyzer()
 
         t = ParsingTable()
 
@@ -417,81 +401,72 @@ class Parser:
 
         self.table = t
 
-    def ParseInputString(self, input_str):
+    def getActionGenerator(self, input_str):
 
-        try:
-            self.init_stack()
+        self.init_stack()
+        self.lex.set_input(input_str)
 
-            lex = LexicalAnalyzer()
-            lex.set_input(input_str)
+        error = False
+        accepted = False
 
-            error = False
-            accepted = False
+        for (token, token_string) in self.lex:
 
-            for (token, token_string) in lex:
+            while True:
 
-                while True:
+                try:
+                    (action, arg) = self.table.get_action(self.current_state, token)
+                    #print 'PARSER: In state %s with token %s, do %s with arg %s' % (self.current_state, token, action, arg)
+                except TypeError:  # probably returned None
+                    #print 'PARSER: No action for state %s with token %s, error !' % (self.current_state, token)
+                    error = True
+                    break
 
-                    try:
-                        (action, arg) = self.table.get_action(self.current_state, token)
-                        #print 'PARSER: In state %s with token %s, do %s with arg %s' % (self.current_state, token, action, arg)
-                    except TypeError:  # probably returned None
-                        #print 'PARSER: No action for state %s with token %s, error !' % (self.current_state, token)
+                if action == Action.S:
+
+                    if arg == None:
                         error = True
                         break
 
-                    if action == Action.S:
+                    self.push_state(arg)
+                    yield (Action.S, token_string, None)
+                    break
 
-                        if arg == None:
-                            error = True
-                            break
+                elif action == Action.R:
 
-                        self.push_state(arg)
-                        self.OnShift(token, token_string, arg)
-                        break
-
-                    elif action == Action.R:
-
-                        if arg == None:
-                            error = True
-                            break
-
-                        rhs = self.table.get_rhs(arg)
-                        lhs = self.table.get_lhs(arg)
-
-                        if lhs == None or rhs == None:
-                            error = True
-                            break
-
-                        self.pop_states(rhs)
-
-                        goto = self.table.get_goto(self.current_state, lhs)
-                        if goto == None:
-                            error = True
-                            break
-
-                        self.push_state(goto)
-                        self.OnReduce(arg, goto)
-
-                    elif action == Action.ACCEPT:
-                        accepted = True
-                        break
-                    else:
+                    if arg == None:
                         error = True
                         break
 
-                if error:
-                    self.OnParseError()
+                    rhs = self.table.get_rhs(arg)
+                    lhs = self.table.get_lhs(arg)
+
+                    if lhs == None or rhs == None:
+                        error = True
+                        break
+
+                    self.pop_states(rhs)
+
+                    goto = self.table.get_goto(self.current_state, lhs)
+                    if goto == None:
+                        error = True
+                        break
+
+                    self.push_state(goto)
+                    yield (Action.R, arg, rhs)
+
+                elif action == Action.ACCEPT:
+                    accepted = True
                     break
-                elif accepted:
-                    self.OnAccept()
+                else:
+                    error = True
                     break
 
-            return token == Token.EOS
-
-        except LexerException:
-            self.OnLexerError()
-            return False
+            if error:
+                raise ParserException()
+                break
+            elif accepted:
+                raise StopIteration
+                break
 
     def init_stack(self):
         self.stack = [0]
@@ -506,20 +481,3 @@ class Parser:
     @property
     def current_state(self):
         return self.stack[-1]
-
-    def OnShift(self, token, token_string, next_state):
-        sys.stdout.write(' S%s[%s:%s]' % (next_state, token, token_string))
-        return True
-
-    def OnReduce(self, rule, next_state):
-        sys.stdout.write(' R%s,%s' % (rule, next_state))
-        return True
-
-    def OnAccept(self):
-        sys.stdout.write(" **\n")
-
-    def OnParseError(self):
-        sys.stdout.write(' ParseError\n')
-
-    def OnLexerError(self):
-        sys.stdout.write(' LexerError\n')

@@ -51,10 +51,42 @@ Token = enum(
         CMD_LIST = 21,
         CMD_CLEAR = 22
     )
+TOKEN_COUNT = 23
+
+Terminal = enum(
+                S = 0,
+                E = 1,
+                T = 2,
+                F = 3,
+                B = 4
+                )
+TERMINAL_COUNT = 5
+
+Action = enum(
+            S = 'S',
+            R = 'R',
+            ACCEPT = 'A'
+            )
+
+STATES_COUNT = 33
+RULES_COUNT = 18 + 1  # index from 1
+
+
+class UndefinedVariableException(Exception):
+    pass
+
+
+class ParserException(Exception):
+    pass
 
 
 class LexerException(Exception):
     pass
 
+
 class FSMException(Exception):
+    pass
+
+
+class ExitCMD(Exception):
     pass
